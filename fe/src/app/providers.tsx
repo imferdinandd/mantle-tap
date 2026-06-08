@@ -6,11 +6,13 @@ import { WagmiProvider } from '@privy-io/wagmi';
 import { createConfig, http } from 'wagmi';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
-import { mantleSepolia } from '@/config/chains';
+import { MANTLE_SEPOLIA_RPC, mantleSepolia } from '@/config/chains';
 
 export const config = createConfig({
   chains: [mantleSepolia],
-  transports: { [mantleSepolia.id]: http() },
+  transports: {
+    [mantleSepolia.id]: http(MANTLE_SEPOLIA_RPC),
+  },
 });
 
 const queryClient = new QueryClient();
@@ -35,7 +37,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         loginMethods: ['email', 'google', 'wallet'],
         embeddedWallets: {
           ethereum: {
-            createOnLogin: 'off',
+            createOnLogin: 'users-without-wallets',
           },
         },
         defaultChain: mantleSepolia,
