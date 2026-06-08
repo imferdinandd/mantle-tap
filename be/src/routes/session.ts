@@ -104,7 +104,10 @@ async function mintUsdcFor(recipient: `0x${string}`): Promise<`0x${string}`> {
  * POST /api/session/create
  *
  * 1. Verify trader signed the session key authorization
- * 2. Transfer USDC + MON from relayer wallet to the session key address
+ * 2. Return the verified session key metadata.
+ *
+ * The session key is not funded with native MNT. It only signs order payloads
+ * off-chain; backend relays the transaction and pays gas.
  */
 router.post('/create', async (req: Request, res: Response) => {
   try {
@@ -133,32 +136,11 @@ router.post('/create', async (req: Request, res: Response) => {
 
     logger.info('✅ Session key signature verified', { trader, sessionKeyAddress, expiresAt });
 
-    const { account, publicClient, walletClient } = buildRelayer();
-
-    const mntAmount = parseUnits(process.env.SESSION_MNT_AMOUNT ?? '0.05', 18);
-
-    logger.info('💸 Funding session key with MNT for gas...', {
-      relayer: account.address,
-      sessionKey: sessionKeyAddress,
-      mnt: formatUnits(mntAmount, 18),
-    });
-
-    const mntTxHash = await walletClient.sendTransaction({
-      to: sessionKeyAddress as `0x${string}`,
-      value: mntAmount,
-    });
-    const mntReceipt = await publicClient.waitForTransactionReceipt({ hash: mntTxHash });
-    if (mntReceipt.status === 'reverted') throw new Error('MNT transfer reverted');
-    logger.info('✅ MNT sent', { mntTxHash });
-
     res.json({
       success: true,
       sessionKeyAddress,
       expiresAt,
-      mntTxHash,
-      funding: {
-        mnt: formatUnits(mntAmount, 18),
-      },
+      funding: { mnt: '0' },
     });
   } catch (error: any) {
     logger.error('❌ Failed to create session key:', error);
