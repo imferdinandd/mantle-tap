@@ -1,25 +1,16 @@
 'use client';
 
-import { useCallback, useState, useRef } from 'react';
+import { useCallback, useState } from 'react';
 import {
   useWriteContract,
   useReadContract,
   useAccount,
   usePublicClient,
 } from 'wagmi';
-import { createWalletClient, createPublicClient, http, maxUint256, keccak256, toBytes, parseUnits } from 'viem';
+import { encodePacked, maxUint256, keccak256, toBytes, parseUnits } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
-import { TAP_BET_MANAGER_ADDRESS, USDC_ADDRESS } from '@/config/contracts';
+import { BACKEND_API_URL, TAP_BET_MANAGER_ADDRESS, USDC_ADDRESS } from '@/config/contracts';
 import { useTapToTrade } from '@/features/trading/contexts/TapToTradeContext';
-
-const MANTLE_SEPOLIA = {
-  id: 5003,
-  name: 'Mantle Sepolia',
-  nativeCurrency: { name: 'MNT', symbol: 'MNT', decimals: 18 },
-  rpcUrls: {
-    default: { http: [process.env.NEXT_PUBLIC_RPC_URL ?? 'https://rpc.sepolia.mantle.xyz'] },
-  },
-} as const;
 
 const TAP_BET_MANAGER_ABI = [
   {
@@ -38,7 +29,14 @@ const TAP_BET_MANAGER_ABI = [
   },
   {
     type: 'function',
-    name: 'placeBetFor',
+    name: 'sessionNonces',
+    inputs: [{ name: '', type: 'address' }],
+    outputs: [{ name: '', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    name: 'placeBetWithSessionSignature',
     inputs: [
       { name: 'trader', type: 'address' },
       { name: 'symbol', type: 'bytes32' },
@@ -47,6 +45,7 @@ const TAP_BET_MANAGER_ABI = [
       { name: 'collateral', type: 'uint256' },
       { name: 'expiry', type: 'uint256' },
       { name: 'expectedMultiplier', type: 'uint256' },
+      { name: 'signature', type: 'bytes' },
     ],
     outputs: [{ name: 'betId', type: 'uint256' }],
     stateMutability: 'nonpayable',
@@ -87,11 +86,6 @@ export function usePlaceBet() {
   const [isPlacing, setIsPlacing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Nonce manager — shared init promise prevents race condition on rapid bets
-  const sessionNonceRef = useRef<number | null>(null);
-  const lastSessionKeyRef = useRef<string | null>(null);
-  const nonceFetchingRef = useRef<Promise<number> | null>(null);
-
   const { writeContractAsync } = useWriteContract();
 
   // Allowance check for the connected wallet (fallback path)
@@ -116,49 +110,62 @@ export function usePlaceBet() {
       if (sessionKey.expiresAt <= Date.now()) {
         throw new Error('Session expired — please start a new session');
       }
+      if (!publicClient) { setError('Public client unavailable'); return null; }
 
       setIsPlacing(true);
       try {
         const account = privateKeyToAccount(sessionKey.privateKey);
-        const transport = http(process.env.NEXT_PUBLIC_RPC_URL);
-        const sessionPublicClient = createPublicClient({ chain: MANTLE_SEPOLIA, transport });
-        const sessionClient = createWalletClient({ account, chain: MANTLE_SEPOLIA, transport });
 
-        // Reset nonce tracking when session key changes
-        if (lastSessionKeyRef.current !== sessionKey.address) {
-          lastSessionKeyRef.current = sessionKey.address;
-          sessionNonceRef.current = null;
-          nonceFetchingRef.current = null;
-        }
-
-        // Atomic nonce init — if two bets race here, both await the same promise
-        if (sessionNonceRef.current === null) {
-          if (!nonceFetchingRef.current) {
-            nonceFetchingRef.current = sessionPublicClient
-              .getTransactionCount({ address: account.address, blockTag: 'pending' })
-              .then((n) => { sessionNonceRef.current = n; return n; })
-              .finally(() => { nonceFetchingRef.current = null; });
-          }
-          await nonceFetchingRef.current;
-        }
-        const nonce = sessionNonceRef.current!++;
-
-        // Session key calls placeBetFor — USDC pulled from trader's wallet (already approved)
-        const tx = await sessionClient.writeContract({
+        const nonce = await publicClient.readContract({
           address: TAP_BET_MANAGER_ADDRESS,
           abi: TAP_BET_MANAGER_ABI,
-          functionName: 'placeBetFor',
-          args: [sessionKey.trader, symbolBytes32, params.targetPrice, entryPrice, collateral, expiry, BigInt(params.expectedMultiplier)],
-          gas: 500000n,
-          nonce,
+          functionName: 'sessionNonces',
+          args: [sessionKey.trader],
+        }) as bigint;
+
+        const messageHash = keccak256(
+          encodePacked(
+            ['address', 'bytes32', 'uint256', 'uint256', 'uint256', 'uint256', 'uint256', 'uint256', 'address', 'uint256'],
+            [
+              sessionKey.trader,
+              symbolBytes32,
+              params.targetPrice,
+              entryPrice,
+              collateral,
+              expiry,
+              BigInt(params.expectedMultiplier),
+              nonce,
+              TAP_BET_MANAGER_ADDRESS,
+              5003n,
+            ],
+          ),
+        );
+
+        const sessionSignature = await account.signMessage({ message: { raw: messageHash } });
+
+        const response = await fetch(`${BACKEND_API_URL}/api/one-tap/place-bet-with-session`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            trader: sessionKey.trader,
+            symbol: params.symbolName,
+            targetPrice: params.targetPrice.toString(),
+            entryPrice: entryPrice.toString(),
+            collateral: collateral.toString(),
+            expiry: expiry.toString(),
+            expectedMultiplier: params.expectedMultiplier,
+            sessionSignature,
+          }),
         });
 
+        const result = await response.json();
+        if (!response.ok || !result.success) {
+          throw new Error(result.error || 'Relayed bet failed');
+        }
+
         setIsPlacing(false);
-        return tx;
+        return result.data.transactionHash;
       } catch (err: unknown) {
-        // Reset nonce so next bet re-fetches from chain (in case of revert/dropped tx)
-        sessionNonceRef.current = null;
-        nonceFetchingRef.current = null;
         setIsApproving(false);
         setIsPlacing(false);
         throw err; // re-throw so TradingGrid's catch shows toast.error
