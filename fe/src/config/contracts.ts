@@ -1,4 +1,4 @@
-// TapX contract addresses on Monad Testnet
+// TapX contract addresses on Mantle Sepolia
 // Set via NEXT_PUBLIC_* env vars in .env.local
 
 export const TAP_BET_MANAGER_ADDRESS = (
