@@ -85,10 +85,10 @@ The server exposes HTTP + WebSocket endpoints for the frontend to consume live p
 
 | Contract         | Address                                      |
 | ---------------- | -------------------------------------------- |
-| TapBetManager    | `0x8188490C2662fb71a41693e597Cf462321eB4Ece` |
-| TapVault         | `0x0880547CCb0021E738aBFF409d38152A569691bD` |
-| MultiplierEngine | `0x72A0E4B11D78E4b976f05Be1443DB321980555B5` |
-| PriceAdapter     | `0x07C59b4c5F068Bb0118F2610297124A00baA2a5a` |
+| TapBetManager    | `0xB681990b428Ad7ecDc3421110C4D763d171cF0eD` |
+| TapVault         | `0x3e98543F35D2BD4A051c75D01e624844b05ACc97` |
+| MultiplierEngine | `0x247093cEcCB72d4CCB6951BF13CC9f28Be58aDCF` |
+| PriceAdapter     | `0x6e6cb97D6F9031D42BE9fB95796950e1afa9Ae86` |
 | USDC (Mock)      | `0x4f2FB7482EB7e60437715489f28B2Cc3aC4DC743` |
 
 ---
