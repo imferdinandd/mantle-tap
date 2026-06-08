@@ -23,11 +23,11 @@ const WalletConnectButton: React.FC = () => {
     useWalletActions();
   const { usdcBalance } = useWalletBalance();
 
-  // Auto-switch to Monad when authenticated
+  // Auto-switch to Mantle when authenticated
   useEffect(() => {
     if (authenticated && chainId !== mantleSepolia.id) {
       switchChain({ chainId: mantleSepolia.id });
-      toast.success('Switching to Monad Testnet network...');
+      toast.success('Switching to Mantle Sepolia network...');
     }
   }, [authenticated, chainId, switchChain]);
 
@@ -118,7 +118,7 @@ const WalletConnectButton: React.FC = () => {
       <div className="relative group">
         <button
           className="flex items-center justify-center w-12 h-12 bg-slate-800 hover:bg-slate-700 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg"
-          title="Monad Testnet"
+          title="Mantle Sepolia"
         >
           <svg
             width="24"
