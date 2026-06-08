@@ -2,6 +2,7 @@
 pragma solidity ^0.8.24;
 
 import "forge-std/Test.sol";
+import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import "../src/trading/TapBetManager.sol";
 import "../src/trading/PriceAdapter.sol";
 import "../src/trading/MultiplierEngine.sol";
@@ -102,7 +103,7 @@ contract TapBetManagerTest is Test {
         uint256 expectedMul = multiplierEngine.getMultiplier(currentPrice, target, timeToExpiry);
 
         vm.prank(user);
-        betId = manager.placeBet(BTC_SYMBOL, target, COLLATERAL, expiry, expectedMul);
+        betId = manager.placeBet(BTC_SYMBOL, target, currentPrice, COLLATERAL, expiry, expectedMul);
     }
 
     function _placeBetDown() internal returns (uint256 betId) {
@@ -114,7 +115,7 @@ contract TapBetManagerTest is Test {
         uint256 expectedMul = multiplierEngine.getMultiplier(currentPrice, target, timeToExpiry);
 
         vm.prank(user);
-        betId = manager.placeBet(BTC_SYMBOL, target, COLLATERAL, expiry, expectedMul);
+        betId = manager.placeBet(BTC_SYMBOL, target, currentPrice, COLLATERAL, expiry, expectedMul);
     }
 
     // ─────────────────────────────────────────
@@ -156,7 +157,7 @@ contract TapBetManagerTest is Test {
 
         vm.prank(user);
         vm.expectRevert("TBM: zero collateral");
-        manager.placeBet(BTC_SYMBOL, target, 0, expiry, mul);
+        manager.placeBet(BTC_SYMBOL, target, currentPrice, 0, expiry, mul);
     }
 
     function testPlaceBet_ExpiredExpiryReverts() public {
@@ -166,7 +167,7 @@ contract TapBetManagerTest is Test {
 
         vm.prank(user);
         vm.expectRevert("TBM: expiry in past");
-        manager.placeBet(BTC_SYMBOL, target, COLLATERAL, block.timestamp - 1, mul);
+        manager.placeBet(BTC_SYMBOL, target, currentPrice, COLLATERAL, block.timestamp - 1, mul);
     }
 
     // ─────────────────────────────────────────
@@ -182,7 +183,7 @@ contract TapBetManagerTest is Test {
         uint256 expected = actualMul * 10090 / 10000; // +0.9%
 
         vm.prank(user);
-        manager.placeBet(BTC_SYMBOL, target, COLLATERAL, expiry, expected);
+        manager.placeBet(BTC_SYMBOL, target, currentPrice, COLLATERAL, expiry, expected);
     }
 
     function testPlaceBet_MultiplierOver1Pct_Reverts() public {
@@ -195,7 +196,7 @@ contract TapBetManagerTest is Test {
 
         vm.prank(user);
         vm.expectRevert("TBM: multiplier slippage exceeded");
-        manager.placeBet(BTC_SYMBOL, target, COLLATERAL, expiry, expected);
+        manager.placeBet(BTC_SYMBOL, target, currentPrice, COLLATERAL, expiry, expected);
     }
 
     // ─────────────────────────────────────────
@@ -216,7 +217,7 @@ contract TapBetManagerTest is Test {
         uint256 settlerBefore = usdc.balanceOf(settler);
 
         vm.prank(settler);
-        manager.settleBetWin{value: 1}(betId, data);
+        manager.settleBetWin(betId);
 
         TapBetManager.Bet memory settled = manager.getBet(betId);
         assertEq(uint8(settled.status), uint8(TapBetManager.BetStatus.WON));
@@ -245,7 +246,7 @@ contract TapBetManagerTest is Test {
         uint256 userBefore = usdc.balanceOf(user);
 
         vm.prank(settler);
-        manager.settleBetWin{value: 1}(betId, data);
+        manager.settleBetWin(betId);
 
         assertGt(usdc.balanceOf(user), userBefore);
     }
@@ -267,7 +268,7 @@ contract TapBetManagerTest is Test {
 
         vm.prank(settler);
         vm.expectRevert("TBM: win condition not met");
-        manager.settleBetWin{value: 1}(betId, data);
+        manager.settleBetWin(betId);
     }
 
     // ─────────────────────────────────────────
@@ -283,12 +284,12 @@ contract TapBetManagerTest is Test {
         bytes[] memory data = _buildUpdateData(int64(uint64(bet.targetPrice)), newTs);
 
         vm.prank(settler);
-        manager.settleBetWin{value: 1}(betId, data);
+        manager.settleBetWin(betId);
 
         // Second attempt should revert
         vm.prank(settler);
         vm.expectRevert("TBM: not active");
-        manager.settleBetWin{value: 1}(betId, data);
+        manager.settleBetWin(betId);
     }
 
     // ─────────────────────────────────────────
@@ -397,10 +398,166 @@ contract TapBetManagerTest is Test {
         uint256 settlerBefore = usdc.balanceOf(settler);
 
         vm.prank(settler);
-        manager.settleBetWin{value: 1}(betId, data);
+        manager.settleBetWin(betId);
 
         uint256 totalPayout = (COLLATERAL * bet.multiplier) / 100;
         uint256 expectedFee = (totalPayout * 50) / 10000; // 0.5%
         assertEq(usdc.balanceOf(settler) - settlerBefore, expectedFee);
+    }
+
+    // ─────────────────────────────────────────
+    // placeBetsWithSessionSignature — batch placement
+    // ─────────────────────────────────────────
+
+    event BetPlacementSkipped(
+        address indexed trader,
+        bytes32 indexed symbol,
+        uint256 targetPrice,
+        uint256 expiry,
+        string reason
+    );
+
+    function _buildBetParamsUp(uint256 expirySecondsFromNow) internal view returns (TapBetManager.BetParams memory p) {
+        uint256 currentPrice = uint256(uint64(PRICE_8DEC));
+        uint256 target = currentPrice + (currentPrice * 200) / 10000;
+        uint256 expiry = block.timestamp + expirySecondsFromNow;
+        uint256 expectedMul = multiplierEngine.getMultiplier(currentPrice, target, expirySecondsFromNow);
+        p = TapBetManager.BetParams({
+            symbol: BTC_SYMBOL,
+            targetPrice: target,
+            entryPrice: currentPrice,
+            collateral: COLLATERAL,
+            expiry: expiry,
+            expectedMultiplier: expectedMul
+        });
+    }
+
+    function _buildBetParamsDown(uint256 expirySecondsFromNow) internal view returns (TapBetManager.BetParams memory p) {
+        uint256 currentPrice = uint256(uint64(PRICE_8DEC));
+        uint256 target = currentPrice - (currentPrice * 200) / 10000;
+        uint256 expiry = block.timestamp + expirySecondsFromNow;
+        uint256 expectedMul = multiplierEngine.getMultiplier(currentPrice, target, expirySecondsFromNow);
+        p = TapBetManager.BetParams({
+            symbol: BTC_SYMBOL,
+            targetPrice: target,
+            entryPrice: currentPrice,
+            collateral: COLLATERAL,
+            expiry: expiry,
+            expectedMultiplier: expectedMul
+        });
+    }
+
+    function _buildStaleBetParams() internal view returns (TapBetManager.BetParams memory p) {
+        uint256 currentPrice = uint256(uint64(PRICE_8DEC));
+        uint256 target = currentPrice + (currentPrice * 200) / 10000;
+        p = TapBetManager.BetParams({
+            symbol: BTC_SYMBOL,
+            targetPrice: target,
+            entryPrice: currentPrice,
+            collateral: COLLATERAL,
+            expiry: block.timestamp - 1, // already expired by the time the batch lands
+            expectedMultiplier: 0
+        });
+    }
+
+    function _signSessionBatch(
+        uint256 signerPk,
+        address trader,
+        TapBetManager.BetParams[] memory betsList,
+        uint256 nonce
+    ) internal view returns (bytes memory signature) {
+        bytes32 messageHash = keccak256(
+            abi.encodePacked(
+                trader,
+                keccak256(abi.encode(betsList)),
+                nonce,
+                address(manager),
+                block.chainid
+            )
+        );
+        bytes32 ethSignedHash = MessageHashUtils.toEthSignedMessageHash(messageHash);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(signerPk, ethSignedHash);
+        signature = abi.encodePacked(r, s, v);
+    }
+
+    function testPlaceBetsBatch_HappyPath_PlacesAllAndIncrementsNonce() public {
+        uint256 sessionPk = 0xA11CE;
+        address sessionKey = vm.addr(sessionPk);
+        vm.prank(user);
+        manager.authorizeSessionKey(sessionKey);
+
+        TapBetManager.BetParams[] memory bets = new TapBetManager.BetParams[](3);
+        bets[0] = _buildBetParamsUp(300);
+        bets[1] = _buildBetParamsUp(300);
+        bets[2] = _buildBetParamsDown(300);
+
+        uint256 nonceBefore = manager.sessionNonces(user);
+        bytes memory sig = _signSessionBatch(sessionPk, user, bets, nonceBefore);
+
+        uint256 vaultBefore = usdc.balanceOf(address(vault));
+
+        manager.placeBetsWithSessionSignature(user, bets, sig);
+
+        assertEq(manager.sessionNonces(user), nonceBefore + 1);
+        assertEq(manager.getActiveBets().length, 3);
+        assertEq(usdc.balanceOf(address(vault)), vaultBefore + COLLATERAL * 3);
+    }
+
+    function testPlaceBetsBatch_PartialSkip_StaleEntrySkippedRestPlaced() public {
+        uint256 sessionPk = 0xB0B;
+        address sessionKey = vm.addr(sessionPk);
+        vm.prank(user);
+        manager.authorizeSessionKey(sessionKey);
+
+        TapBetManager.BetParams[] memory bets = new TapBetManager.BetParams[](3);
+        bets[0] = _buildBetParamsUp(300);
+        bets[1] = _buildStaleBetParams();
+        bets[2] = _buildBetParamsUp(300);
+
+        uint256 nonceBefore = manager.sessionNonces(user);
+        bytes memory sig = _signSessionBatch(sessionPk, user, bets, nonceBefore);
+
+        vm.expectEmit(true, true, false, true);
+        emit BetPlacementSkipped(user, bets[1].symbol, bets[1].targetPrice, bets[1].expiry, "expiry in past");
+
+        manager.placeBetsWithSessionSignature(user, bets, sig);
+
+        // Only the 2 valid entries got placed; the whole batch still shares one nonce bump
+        assertEq(manager.getActiveBets().length, 2);
+        assertEq(manager.sessionNonces(user), nonceBefore + 1);
+    }
+
+    function testPlaceBetsBatch_BadSignature_Reverts() public {
+        uint256 sessionPk = 0xC0FFEE;
+        address sessionKey = vm.addr(sessionPk);
+        vm.prank(user);
+        manager.authorizeSessionKey(sessionKey);
+
+        TapBetManager.BetParams[] memory bets = new TapBetManager.BetParams[](1);
+        bets[0] = _buildBetParamsUp(300);
+
+        // Signed by a key the trader never authorized
+        uint256 wrongPk = 0xBADBAD;
+        bytes memory sig = _signSessionBatch(wrongPk, user, bets, manager.sessionNonces(user));
+
+        vm.expectRevert("TBM: invalid session signature");
+        manager.placeBetsWithSessionSignature(user, bets, sig);
+    }
+
+    function testPlaceBetsBatch_EmptyBatch_Reverts() public {
+        TapBetManager.BetParams[] memory bets = new TapBetManager.BetParams[](0);
+        vm.expectRevert("TBM: empty batch");
+        manager.placeBetsWithSessionSignature(user, bets, "");
+    }
+
+    function testPlaceBetsBatch_OversizedBatch_Reverts() public {
+        uint256 max = manager.MAX_BATCH_SIZE();
+        TapBetManager.BetParams[] memory bets = new TapBetManager.BetParams[](max + 1);
+        for (uint256 i = 0; i < bets.length; i++) {
+            bets[i] = _buildBetParamsUp(300);
+        }
+
+        vm.expectRevert("TBM: batch too large");
+        manager.placeBetsWithSessionSignature(user, bets, "");
     }
 }
