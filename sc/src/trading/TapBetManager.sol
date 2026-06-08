@@ -4,6 +4,8 @@ pragma solidity ^0.8.24;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
+import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
@@ -34,6 +36,7 @@ interface IMultiplierEngine {
  */
 contract TapBetManager is Ownable, ReentrancyGuard, Pausable {
     using SafeERC20 for IERC20;
+    using MessageHashUtils for bytes32;
 
     enum Direction { UP, DOWN }
     enum BetStatus  { ACTIVE, WON, EXPIRED }
@@ -60,6 +63,7 @@ contract TapBetManager is Ownable, ReentrancyGuard, Pausable {
 
     // trader => sessionKey => authorized
     mapping(address => mapping(address => bool)) public authorizedSessionKeys;
+    mapping(address => uint256) public sessionNonces;
 
     ITapVault         public immutable vault;
     IPriceAdapter     public immutable priceAdapter;
@@ -93,6 +97,7 @@ contract TapBetManager is Ownable, ReentrancyGuard, Pausable {
     event SettlerFeeUpdated(uint256 newFeeBps);
     event SessionKeyAuthorized(address indexed trader, address indexed sessionKey);
     event SessionKeyRevoked(address indexed trader, address indexed sessionKey);
+    event SessionBetRelayed(address indexed trader, address indexed sessionKey, address indexed relayer, uint256 nonce);
 
     constructor(
         address _vault,
@@ -186,6 +191,48 @@ contract TapBetManager is Ownable, ReentrancyGuard, Pausable {
     ) external nonReentrant whenNotPaused returns (uint256 betId) {
         require(authorizedSessionKeys[trader][msg.sender], "TBM: session key not authorized");
         betId = _placeBetFor(trader, symbol, targetPrice, entryPrice, collateral, expiry, expectedMultiplier);
+    }
+
+    /**
+     * @notice Place a bet via backend relayer using an authorized session key signature.
+     *         The session key signs off-chain; the relayer pays native gas.
+     * @dev Signature is over trader, bet params, current trader nonce, this contract, and chain id.
+     */
+    function placeBetWithSessionSignature(
+        address trader,
+        bytes32 symbol,
+        uint256 targetPrice,
+        uint256 entryPrice,
+        uint256 collateral,
+        uint256 expiry,
+        uint256 expectedMultiplier,
+        bytes calldata signature
+    ) external nonReentrant whenNotPaused returns (uint256 betId) {
+        require(trader != address(0), "TBM: zero trader");
+
+        uint256 nonce = sessionNonces[trader];
+        bytes32 messageHash = keccak256(
+            abi.encodePacked(
+                trader,
+                symbol,
+                targetPrice,
+                entryPrice,
+                collateral,
+                expiry,
+                expectedMultiplier,
+                nonce,
+                address(this),
+                block.chainid
+            )
+        );
+
+        address sessionKey = ECDSA.recover(messageHash.toEthSignedMessageHash(), signature);
+        require(authorizedSessionKeys[trader][sessionKey], "TBM: invalid session signature");
+
+        sessionNonces[trader] = nonce + 1;
+        betId = _placeBetFor(trader, symbol, targetPrice, entryPrice, collateral, expiry, expectedMultiplier);
+
+        emit SessionBetRelayed(trader, sessionKey, msg.sender, nonce);
     }
 
     function _placeBetFor(
