@@ -17,6 +17,12 @@ export interface PerSecondChartProps {
     entryPrice: number,
     entryTime: number,
   ) => void;
+  // Multi-tap drag only: receives all cells queued during one drag gesture on
+  // mouse-release, so the caller can relay them as a single batched transaction.
+  // Additive — when omitted, multi-tap falls back to per-cell onCellClick calls.
+  onMultiTapBatch?: (
+    entries: { targetPrice: number; targetTime: number; entryPrice: number; entryTime: number }[],
+  ) => void;
   isPlacingBet?: boolean;
   multiTapEnabled?: boolean;
   logoUrl?: string; // URL for the coin logo
