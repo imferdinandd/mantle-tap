@@ -3,10 +3,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useTapToTrade } from '@/features/trading/contexts/TapToTradeContext';
 import { useBinaryOrders, BinaryOrder } from '@/features/trading/hooks/useBinaryOrders';
-import { useAccount } from 'wagmi';
+import { useEmbeddedWallet } from '@/features/wallet/hooks/useEmbeddedWallet';
 
 const COLLATERAL_PRESETS = [1, 5, 10] as const;
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
 
 // ── Mock whale addresses ────────────────────────────────────────────────────
 const WHALE_NAMES = [
@@ -175,7 +174,7 @@ function WhaleRow({ whale, isNew }: { whale: WhaleBet; isNew: boolean }) {
 
 export default function SessionControls() {
   const { isActive, setIsActive, collateralPerTap, setCollateralPerTap, sessionKey, isCreatingSession, createSession, clearSession, multiTapEnabled, setMultiTapEnabled } = useTapToTrade();
-  const { address } = useAccount();
+  const { address } = useEmbeddedWallet();
   const { orders: myOrders, isLoading } = useBinaryOrders();
   const [, tick] = useState(0);
 
@@ -249,7 +248,7 @@ export default function SessionControls() {
           />
         </div>
         <button
-          disabled={isCreatingSession}
+          disabled={isCreatingSession || !address}
           onClick={async () => {
             if (isActive) {
               clearSession();
@@ -267,13 +266,15 @@ export default function SessionControls() {
         >
           {isCreatingSession
             ? 'Creating session…'
+            : !address
+            ? 'Connect Wallet'
             : isActive
             ? 'Stop Trading'
             : 'Start Trading'}
         </button>
         {sessionKey && (
           <p className="text-[10px] text-green-400 text-center">
-            Session active · expires {new Date(sessionKey.expiresAt).toLocaleTimeString()}
+            Session key active · expires {new Date(sessionKey.expiresAt).toLocaleTimeString()}
           </p>
         )}
 
