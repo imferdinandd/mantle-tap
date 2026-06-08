@@ -51,6 +51,25 @@ export const TAP_BET_MANAGER_ABI = [
     { name: 'expectedMultiplier', type: 'uint256' },
     { name: 'signature', type: 'bytes' },
   ], outputs: [{ name: 'betId', type: 'uint256' }], stateMutability: 'nonpayable' },
+  { type: 'function', name: 'placeBetsWithSessionSignature', inputs: [
+    { name: 'trader', type: 'address' },
+    { name: 'betsList', type: 'tuple[]', components: [
+      { name: 'symbol', type: 'bytes32' },
+      { name: 'targetPrice', type: 'uint256' },
+      { name: 'entryPrice', type: 'uint256' },
+      { name: 'collateral', type: 'uint256' },
+      { name: 'expiry', type: 'uint256' },
+      { name: 'expectedMultiplier', type: 'uint256' },
+    ]},
+    { name: 'signature', type: 'bytes' },
+  ], outputs: [], stateMutability: 'nonpayable' },
+  { type: 'event', name: 'BetPlacementSkipped', inputs: [
+    { name: 'trader', type: 'address', indexed: true },
+    { name: 'symbol', type: 'bytes32', indexed: true },
+    { name: 'targetPrice', type: 'uint256', indexed: false },
+    { name: 'expiry', type: 'uint256', indexed: false },
+    { name: 'reason', type: 'string', indexed: false },
+  ], anonymous: false },
   { type: 'event', name: 'BetPlaced', inputs: [
     { name: 'betId', type: 'uint256', indexed: true },
     { name: 'user', type: 'address', indexed: true },
