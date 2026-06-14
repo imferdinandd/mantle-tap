@@ -1,7 +1,7 @@
 {
-  "name": "tapx-solver",
+  "name": "mantle-tap-solver",
   "version": "1.0.0",
-  "description": "TapX permissionless solver — monitors bets, detects wins, settles via Pyth proofs on Monad",
+  "description": "MantleTap permissionless solver — monitors bets, detects wins, settles via Pyth proofs on Mantle",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
@@ -9,12 +9,12 @@
     "dev": "nodemon --exec ts-node src/index.ts"
   },
   "keywords": [
-    "tapx",
+    "mantle-tap",
     "solver",
     "pyth",
-    "monad"
+    "mantle"
   ],
-  "author": "TapX Team",
+  "author": "MantleTap Team",
   "license": "MIT",
   "dependencies": {
     "@pythnetwork/hermes-client": "^1.0.0",

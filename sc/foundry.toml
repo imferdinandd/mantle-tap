@@ -10,7 +10,7 @@ cache_path = "cache"
 solc_version = "0.8.24"
 optimizer = true
 optimizer_runs = 200
-# via_ir disabled — triggers a Yul optimizer stack bug in solc 0.8.24; not needed for TapX contracts
+# via_ir disabled — triggers a Yul optimizer stack bug in solc 0.8.24; not needed for MantleTap contracts
 
 # EVM version
 evm_version = "cancun"

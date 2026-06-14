@@ -9,7 +9,7 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 /**
  * @title TapVault
- * @notice LP vault for TapX. Holds USDC liquidity, issues ERC-20 shares, pays out winners.
+ * @notice LP vault for MantleTap. Holds USDC liquidity, issues ERC-20 shares, pays out winners.
  * @dev Deposit/withdraw are permissionless. Only betManager can collectCollateral and payout.
  */
 contract TapVault is ERC20, Ownable, ReentrancyGuard {
@@ -33,7 +33,7 @@ contract TapVault is ERC20, Ownable, ReentrancyGuard {
         _;
     }
 
-    constructor(address _usdc) ERC20("TapX Vault Share", "TVS") Ownable(msg.sender) {
+    constructor(address _usdc) ERC20("MantleTap Vault Share", "MTVS") Ownable(msg.sender) {
         require(_usdc != address(0), "TapVault: zero usdc");
         usdc = IERC20(_usdc);
     }

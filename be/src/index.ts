@@ -11,7 +11,7 @@ const logger = new Logger('Main');
 const PORT = parseInt(process.env.PORT ?? '3001');
 
 async function main(): Promise<void> {
-  logger.info('Starting TapX solver...');
+  logger.info('Starting MantleTap solver...');
 
   const scanner = new BetScanner();
   const priceWatcher = new PriceWatcher();
@@ -38,7 +38,7 @@ async function main(): Promise<void> {
     logger.info(`HTTP server listening on http://localhost:${PORT}`);
   });
 
-  logger.info('TapX solver running');
+  logger.info('MantleTap solver running');
 
   // Graceful shutdown
   const shutdown = async () => {

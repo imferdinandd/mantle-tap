@@ -10,7 +10,7 @@ import "../src/token/MockUSDC.sol";
 
 /**
  * @title Deploy
- * @notice Deploys TapX contracts to Mantle Sepolia (or any EVM chain).
+ * @notice Deploys MantleTap contracts to Mantle Sepolia (or any EVM chain).
  * @dev Set env vars before running:
  *   PYTH_CONTRACT   - Pyth oracle address on target chain
  *   USDC_ADDRESS    - USDC (or MockUSDC) address

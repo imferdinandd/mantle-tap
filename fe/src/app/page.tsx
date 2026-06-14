@@ -12,8 +12,8 @@ const features = [
     description: 'Real-time high-fidelity price feeds from Pyth Network.',
   },
   {
-    title: 'Built on Monad',
-    description: '10,000 TPS, 400ms block time. Blazing fast and ultra low cost.',
+    title: 'Built on Mantle',
+    description: 'Low-cost EVM-compatible L2 with fast finality and native MNT gas token.',
   },
   {
     title: 'Prediction Rewards',
@@ -22,8 +22,8 @@ const features = [
 ];
 
 const stats = [
-  { value: '10K+', label: 'TPS on Monad' },
-  { value: '400ms', label: 'Block Time' },
+  { value: 'L2', label: 'Mantle Network' },
+  { value: 'Fast', label: 'Block Time' },
   { value: '0', label: 'Gas Fees' },
   { value: '∞', label: 'Parallel Positions' },
 ];
@@ -63,7 +63,7 @@ export default function LandingPage() {
               M
             </div>
             <span className="font-black text-xl tracking-tight">
-              Mon<span className="text-purple-400">Tap</span>
+              Mantle<span className="text-purple-400">Tap</span>
             </span>
           </div>
           <div className="hidden md:flex items-center gap-8 text-sm text-gray-400">
@@ -89,7 +89,7 @@ export default function LandingPage() {
           {/* Badge */}
           <div className="inline-flex items-center gap-2 bg-purple-500/10 border border-purple-500/20 rounded-full px-4 py-1.5 text-xs font-semibold text-purple-300 mb-8 backdrop-blur-sm">
             <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse" />
-            Prediction Market · Powered by Monad
+            Prediction Market · Powered by Mantle
           </div>
 
           <h1 className="text-6xl md:text-8xl font-black mb-6 leading-none tracking-tight">
@@ -182,7 +182,7 @@ export default function LandingPage() {
               <p className="text-gray-300 text-lg leading-relaxed">
                 Mantle Tap leverages{' '}
                 <span className="text-purple-400 font-semibold">
-                  Monad&apos;s parallel execution
+                  Mantle&apos;s low-cost L2 execution
                 </span>{' '}
                 and{' '}
                 <span className="text-purple-400 font-semibold">
@@ -194,7 +194,7 @@ export default function LandingPage() {
               <div className="mt-8 space-y-3">
                 {[
                   'One tap to predict, zero complexity',
-                  'Parallel txs in a single block on Monad',
+                  'Parallel txs in a single block on Mantle',
                 ].map((item) => (
                   <div key={item} className="flex items-center gap-3 text-sm text-gray-300">
                     <span className="w-5 h-5 rounded-full bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-purple-400 text-xs flex-shrink-0">
@@ -252,17 +252,17 @@ export default function LandingPage() {
             <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             <div className="relative z-10">
               <div className="text-xs font-bold text-indigo-400 uppercase tracking-widest mb-2">
-                Mode 2 · Monad Exclusive
+                Mode 2 · Mantle Exclusive
               </div>
               <h3 className="text-2xl font-black mb-3">Parallel Multi Tap</h3>
               <p className="text-gray-400 leading-relaxed mb-6">
-                Powered by Monad's parallel execution. Open multiple predictions across different
+                Powered by Mantle&apos;s low-cost L2. Open multiple predictions across different
                 markets simultaneously — all in one block, zero conflict.
               </p>
               <ul className="space-y-2">
                 {[
                   'Predict multiple markets at once',
-                  'Parallel tx execution on Monad',
+                  'Batch tx execution on Mantle',
                   'Maximize rewards every round',
                 ].map((step) => (
                   <li key={step} className="flex items-center gap-2 text-sm text-gray-300">
@@ -326,10 +326,10 @@ export default function LandingPage() {
               M
             </div>
             <span className="font-black">
-              Mon<span className="text-purple-400">Tap</span>
+              Mantle<span className="text-purple-400">Tap</span>
             </span>
           </div>
-          <span className="text-gray-600 text-sm">© 2025 Mantle Tap. Built on Monad.</span>
+          <span className="text-gray-600 text-sm">© 2025 MantleTap. Built on Mantle.</span>
         </div>
       </footer>
 
