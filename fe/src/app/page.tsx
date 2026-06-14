@@ -18,9 +18,6 @@ export default function LandingPage() {
   const [platformProgress, setPlatformProgress] = useState(0);
   const [platformPosition, setPlatformPosition] = useState<'before' | 'fixed' | 'after'>('before');
 
-  // Hero phone parallax
-  const [heroScroll, setHeroScroll] = useState(0);
-
   // Supported Coins section animation
   const coinsRef = useRef<HTMLDivElement>(null);
   const [coinsVisible, setCoinsVisible] = useState(false);
@@ -125,15 +122,6 @@ export default function LandingPage() {
   }, []);
 
 
-  // Hero phone parallax
-  useEffect(() => {
-    const handleHeroScroll = () => {
-      setHeroScroll(window.scrollY);
-    };
-    window.addEventListener('scroll', handleHeroScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleHeroScroll);
-  }, []);
-
   // Supported Coins intersection observer
   useEffect(() => {
     const el = coinsRef.current;
@@ -191,7 +179,7 @@ export default function LandingPage() {
           />
         </div>
         <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-b from-transparent to-black z-10 pointer-events-none"></div>
-        <div className="absolute left-1/2 -translate-x-1/2 z-20 flex flex-col items-center pointer-events-none w-[95%] md:w-auto" style={{ bottom: '70%' }}>
+        <div className="relative z-20 flex flex-col items-center pointer-events-none w-[95%] md:w-auto px-2">
           <h2 className="text-4xl md:text-6xl font-bold text-white text-center mb-4">
             <span className="flex md:hidden items-center justify-center gap-2 flex-wrap">
               Welcome to
@@ -228,24 +216,6 @@ export default function LandingPage() {
           >
             Launch App
           </Link>
-        </div>
-        <div className="absolute bottom-0 left-1/2 z-20 hidden md:block" style={{ transform: `translateX(-50%) translateY(${heroScroll * 0.5}px)` }}>
-          <Image
-            src="/homepage/mockhp.png"
-            alt="MantleTap Mobile App"
-            width={500}
-            height={1000}
-            className="w-auto h-[60vh] object-contain"
-          />
-        </div>
-        <div className="absolute bottom-0 left-0 right-0 z-20 md:hidden" style={{ transform: `translateY(${heroScroll * 0.3}px)` }}>
-          <Image
-            src="/homepage/mockhp.png"
-            alt="MantleTap Mobile App"
-            width={1000}
-            height={600}
-            className="w-full object-cover object-top"
-          />
         </div>
       </section>
 
