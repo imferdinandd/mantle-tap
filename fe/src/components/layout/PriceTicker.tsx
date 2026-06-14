@@ -96,65 +96,41 @@ const PriceTicker: React.FC = () => {
     }
   };
 
-  // Duplicate data for seamless loop
-  const duplicatedData = [...tickerData, ...tickerData];
-
   return (
-    <div className="w-full bg-[#0a0a0a] border-t border-slate-800 overflow-hidden h-10 hidden lg:block">
-      <div className="flex animate-scroll-left">
-        {duplicatedData.map((item, index) => (
-          <div
-            key={`${item.binanceSymbol}-${index}`}
-            onClick={() => handleMarketClick(item)}
-            className="flex items-center gap-2 px-4 py-2 whitespace-nowrap cursor-pointer hover:bg-slate-800/50 transition-colors min-w-fit"
+    <div className="w-full bg-[#0a0a0a] border-t border-slate-800 h-10 hidden lg:flex items-center justify-center gap-2">
+      {tickerData.map((item) => (
+        <div
+          key={item.binanceSymbol}
+          onClick={() => handleMarketClick(item)}
+          className="flex items-center gap-2 px-6 py-2 whitespace-nowrap cursor-pointer hover:bg-slate-800/50 transition-colors rounded"
+        >
+          <img
+            src={item.logoUrl || '/icons/usdc.png'}
+            alt={item.symbol}
+            className="w-5 h-5 rounded-full"
+            onError={(e) => {
+              const target = e.currentTarget;
+              target.style.display = 'none';
+            }}
+          />
+          <span className="text-white font-medium text-sm">{item.symbol}USDT</span>
+          <span className="text-slate-300 font-mono text-sm">
+            $
+            {item.price.toLocaleString('en-US', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: item.price < 1 ? 6 : 2,
+            })}
+          </span>
+          <span
+            className={`font-mono text-sm ${
+              item.change >= 0 ? 'text-green-400' : 'text-red-400'
+            }`}
           >
-            <img
-              src={item.logoUrl || '/icons/usdc.png'}
-              alt={item.symbol}
-              className="w-5 h-5 rounded-full"
-              onError={(e) => {
-                const target = e.currentTarget;
-                target.style.display = 'none';
-              }}
-            />
-            <span className="text-white font-medium text-sm">{item.symbol}USDT</span>
-            <span className="text-slate-300 font-mono text-sm">
-              $
-              {item.price.toLocaleString('en-US', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: item.price < 1 ? 6 : 2,
-              })}
-            </span>
-            <span
-              className={`font-mono text-sm ${
-                item.change >= 0 ? 'text-green-400' : 'text-red-400'
-              }`}
-            >
-              {item.change >= 0 ? '+' : ''}
-              {item.change.toFixed(2)}%
-            </span>
-          </div>
-        ))}
-      </div>
-
-      <style jsx>{`
-        @keyframes scroll-left {
-          0% {
-            transform: translateX(0);
-          }
-          100% {
-            transform: translateX(-50%);
-          }
-        }
-
-        .animate-scroll-left {
-          animation: scroll-left 60s linear infinite;
-        }
-
-        .animate-scroll-left:hover {
-          animation-play-state: paused;
-        }
-      `}</style>
+            {item.change >= 0 ? '+' : ''}
+            {item.change.toFixed(2)}%
+          </span>
+        </div>
+      ))}
     </div>
   );
 };

@@ -75,15 +75,24 @@ const TradingChart: React.FC = () => {
     } else if (currentMarketData?.price) {
       setCurrentPrice(currentMarketData.price);
     }
-  }, [currentOraclePrice?.price, currentMarketData?.price, setCurrentPrice]);
+  }, [activeSymbol, currentOraclePrice?.price, currentMarketData?.price, setCurrentPrice]);
 
-  const livePrice = parseFloat(currentPrice) || 0;
+  const livePrice = parseFloat(
+    currentOraclePrice?.price?.toString() || currentMarketData?.price || currentPrice || '0'
+  );
 
   const handleMarketSelect = (symbol: string) => {
     const selectedMarket = markets.find((m) => m.symbol === symbol);
     if (selectedMarket) {
       setActiveSymbol(symbol);
       setActiveMarket(selectedMarket);
+      // Immediately set price from available data so there's no delay
+      const oraclePrice = oraclePrices[symbol]?.price;
+      const binancePrice = selectedMarket.binanceSymbol
+        ? marketDataMap[selectedMarket.binanceSymbol]?.price
+        : undefined;
+      const immediatePrice = oraclePrice?.toString() ?? binancePrice;
+      if (immediatePrice) setCurrentPrice(immediatePrice);
     }
   };
 
