@@ -26,6 +26,38 @@ export const viewport: Viewport = {
   maximumScale: 3,
 };
 
+export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://mantle-tap.vercel.app'),
+  title: 'MantleTap — Tap to Trade',
+  description: 'The simplest decentralized exchange — tap to trade, open positions, and earn rewards in just one click. Powered by Mantle Network.',
+  icons: {
+    icon: '/favicon.ico',
+    apple: '/mantle-tap-polos.png',
+  },
+  openGraph: {
+    title: 'MantleTap — Tap to Trade',
+    description: 'The simplest decentralized exchange — tap to trade, open positions, and earn rewards in just one click.',
+    url: 'https://mantletap.xyz',
+    siteName: 'MantleTap',
+    images: [
+      {
+        url: '/og-banner.png',
+        width: 1200,
+        height: 630,
+        alt: 'MantleTap — Tap to Trade',
+      },
+    ],
+    locale: 'en_US',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'MantleTap — Tap to Trade',
+    description: 'The simplest decentralized exchange — tap to trade, open positions, and earn rewards in just one click.',
+    images: ['/og-banner.png'],
+  },
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{

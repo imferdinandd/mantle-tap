@@ -16,6 +16,8 @@ interface UseMarketWebSocketReturn {
   oraclePrices: Record<string, OraclePrice>;
 }
 
+import { toWsUrl } from '@/lib/utils';
+
 /**
  * Custom hook to manage WebSocket connections for market data
  * Handles both Binance spot prices and Pyth Oracle prices
@@ -199,9 +201,7 @@ export function useMarketWebSocket(
 
     const connectWebSocket = () => {
       try {
-        const wsUrl =
-          (process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001').replace(/^http/, 'ws') +
-          '/ws/price';
+        const wsUrl = toWsUrl(process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001') + '/ws/price';
         ws = new WebSocket(wsUrl);
 
         ws.onmessage = (event) => {

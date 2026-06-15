@@ -5,6 +5,7 @@
 
 import { useState, useEffect } from 'react';
 import { BACKEND_API_URL } from '@/config/contracts';
+import { toWsUrl } from '@/lib/utils';
 
 interface PriceData {
   symbol: string;
@@ -30,7 +31,7 @@ function connectWebSocket() {
 
   try {
     // Convert http/https to ws/wss
-    const wsUrl = BACKEND_API_URL.replace(/^http/, 'ws') + '/ws/price';
+    const wsUrl = toWsUrl(BACKEND_API_URL) + '/ws/price';
 
     ws = new WebSocket(wsUrl);
 
