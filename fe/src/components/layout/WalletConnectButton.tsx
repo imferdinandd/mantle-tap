@@ -1,12 +1,12 @@
 /* eslint-disable @next/next/no-img-element */
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { usePrivy } from '@privy-io/react-auth';
 import { useSwitchChain, useChainId } from 'wagmi';
 import { mantleSepolia } from '@/config/chains';
 import { toast } from 'sonner';
-import { Wallet, Copy, ExternalLink, LogOut } from 'lucide-react';
+import { Wallet, Copy, ExternalLink, LogOut, Droplets } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,20 +14,25 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useWalletActions } from '@/hooks/wallet/useWalletActions';
 import { useWalletBalance } from '@/hooks/wallet/useWalletBalance';
+import { useUSDCFaucet } from '@/hooks/wallet/useUSDCFaucet';
 
-const WalletConnectButton: React.FC = () => {
+const WalletConnectButtonInner: React.FC = () => {
   const { ready, authenticated, login } = usePrivy();
   const { switchChain } = useSwitchChain();
   const chainId = useChainId();
   const { shortAddress, handleCopyAddress, handleViewExplorer, handleDisconnect } =
     useWalletActions();
   const { usdcBalance } = useWalletBalance();
+  const { isClaiming, handleClaimUSDC } = useUSDCFaucet();
 
   // Auto-switch to Mantle when authenticated
   useEffect(() => {
     if (authenticated && chainId !== mantleSepolia.id) {
-      switchChain({ chainId: mantleSepolia.id });
-      toast.success('Switching to Mantle Sepolia network...');
+      const timer = setTimeout(() => {
+        switchChain({ chainId: mantleSepolia.id });
+        toast.success('Switching to Mantle Sepolia network...');
+      }, 0);
+      return () => clearTimeout(timer);
     }
   }, [authenticated, chainId, switchChain]);
 
@@ -89,6 +94,18 @@ const WalletConnectButton: React.FC = () => {
               </span>
             </div>
 
+            {/* Claim Faucet */}
+            <div className="px-4 py-2 border-b border-slate-700/40">
+              <button
+                onClick={handleClaimUSDC}
+                disabled={isClaiming}
+                className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-[#00d395]/10 hover:bg-[#00d395]/20 border border-[#00d395]/30 hover:border-[#00d395]/50 rounded-lg text-[#00d395] text-sm font-medium transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Droplets className="w-4 h-4" />
+                {isClaiming ? 'Claiming...' : 'Claim USDC Faucet'}
+              </button>
+            </div>
+
             {/* Disconnect */}
             <div className="px-4 py-2">
               <button
@@ -128,6 +145,18 @@ const WalletConnectButton: React.FC = () => {
       </div>
     </div>
   );
+};
+
+const WalletConnectButton: React.FC = () => {
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    setHydrated(true);
+  }, []);
+
+  if (!hydrated) return null;
+
+  return <WalletConnectButtonInner />;
 };
 
 export default WalletConnectButton;

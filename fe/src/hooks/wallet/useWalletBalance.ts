@@ -48,10 +48,18 @@ export const useWalletBalance = () => {
     }
   }, [authenticated, user, address]);
 
+  // Initial fetch
   useEffect(() => {
     if (authenticated && user) {
       fetchUsdcBalance();
     }
+  }, [authenticated, user, fetchUsdcBalance]);
+
+  // Periodic polling every 10s
+  useEffect(() => {
+    if (!authenticated || !user) return;
+    const id = setInterval(fetchUsdcBalance, 10000);
+    return () => clearInterval(id);
   }, [authenticated, user, fetchUsdcBalance]);
 
   useEffect(() => {

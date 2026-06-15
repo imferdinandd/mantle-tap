@@ -1,20 +1,20 @@
 // src/app/layout.tsx
 import './globals.css';
 import type { Metadata, Viewport } from 'next';
-import { Inter, IBM_Plex_Mono } from 'next/font/google';
+import { Plus_Jakarta_Sans, JetBrains_Mono } from 'next/font/google';
 import { Analytics } from '@vercel/analytics/next';
 import { Providers } from './providers';
 
-const inter = Inter({
+const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ['latin'],
-  variable: '--font-inter',
+  variable: '--font-plus-jakarta-sans',
   weight: ['400', '500', '600', '700', '800'],
   display: 'swap',
 });
 
-const ibmPlexMono = IBM_Plex_Mono({
+const jetbrainsMono = JetBrains_Mono({
   subsets: ['latin'],
-  variable: '--font-ibm-plex-mono',
+  variable: '--font-jetbrains-mono',
   weight: ['400', '500', '600', '700'],
   display: 'swap',
 });
@@ -35,10 +35,10 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${inter.variable} ${ibmPlexMono.variable}`}
+      className={`${plusJakartaSans.variable} ${jetbrainsMono.variable}`}
     >
       <head></head>
-      <body className={inter.className} suppressHydrationWarning>
+      <body className={plusJakartaSans.className} suppressHydrationWarning>
         <Providers>{children}</Providers>
         <Analytics />
       </body>

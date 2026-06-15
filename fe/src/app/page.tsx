@@ -136,7 +136,7 @@ export default function LandingPage() {
 
 
   return (
-    <div className="w-full bg-black text-white overflow-x-hidden" style={{ fontFamily: "'Satoshi', sans-serif" }}>
+    <div className="w-full bg-black text-white overflow-x-hidden" style={{ fontFamily: "'Clash Display', sans-serif" }}>
       {/* Header Menu */}
       <StaggeredMenu
         isFixed={true}
@@ -234,7 +234,7 @@ export default function LandingPage() {
           <div className="container mx-auto max-w-7xl">
             {/* Text - scramble title + fade subtitle */}
             <div className="text-center mb-12">
-              <h2 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-[#00d395] to-emerald-300 bg-clip-text text-transparent mb-4 font-mono">
+              <h2 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-[#00d395] to-emerald-300 bg-clip-text text-transparent mb-4 font-display">
                 {displayTitle}
               </h2>
               <div className="relative h-8">

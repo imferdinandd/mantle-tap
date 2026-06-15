@@ -144,7 +144,14 @@ export function useMarketWebSocket(
     };
 
     ws.onmessage = (event) => {
-      const tickers = JSON.parse(event.data);
+      let tickers: any[];
+      try {
+        tickers = JSON.parse(event.data);
+      } catch {
+        return;
+      }
+      if (!Array.isArray(tickers)) return;
+
       const newPrices: Record<string, string> = {};
       const newMarketData: Record<string, MarketData> = {};
 

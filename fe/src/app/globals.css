@@ -1,4 +1,4 @@
-@import url('https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&display=swap');
+@import url('https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700&display=swap');
 @import 'tailwindcss';
 
 @custom-variant dark (&:is(.dark *));
@@ -17,8 +17,9 @@ body::-webkit-scrollbar,
 }
 
 :root {
-  --font-trading-sans: var(--font-inter), system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-trading-mono: var(--font-ibm-plex-mono), Consolas, Monaco, 'Courier New', monospace;
+  --font-clash-display: 'Clash Display', var(--font-plus-jakarta-sans), sans-serif;
+  --font-trading-sans: var(--font-plus-jakarta-sans), system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-trading-mono: var(--font-jetbrains-mono), Consolas, Monaco, 'Courier New', monospace;
   --radius: 0.625rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
@@ -57,8 +58,8 @@ body::-webkit-scrollbar,
   /* ===== Base Colors ===== */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-plus-jakarta-sans), system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), Consolas, Monaco, 'Courier New', monospace;
 
   /* ===== Trading Platform Backgrounds ===== */
   --color-trading-bg: #0b1017; /* Main trading background */
@@ -867,6 +868,10 @@ body {
 /* Trading Font Classes - Professional trading platform styles */
 .font-trading-sans {
   font-family: var(--font-trading-sans);
+}
+
+.font-display {
+  font-family: var(--font-clash-display);
 }
 
 .font-trading-mono {
